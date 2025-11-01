@@ -1,0 +1,73 @@
+{
+  "modes": {
+    "addition": {
+      "best": null
+    },
+    "subtraction": {
+      "best": {
+        "score": 1,
+        "total": 2,
+        "timestamp": "2025-11-01T06:55:08.140430Z",
+        "questions": [
+          {
+            "problem": "50 - 29 = ?",
+            "answer": 21,
+            "user": 21,
+            "correct": true
+          },
+          {
+            "problem": "53 - 26 = ?",
+            "answer": 27,
+            "user": 32,
+            "correct": false
+          }
+        ]
+      }
+    },
+    "multiplication": {
+      "best": {
+        "score": 5,
+        "total": 5,
+        "timestamp": "2025-11-01T06:48:49.199871Z",
+        "questions": [
+          {
+            "problem": "4 × 5 = ?",
+            "answer": 20,
+            "user": 20,
+            "correct": true
+          },
+          {
+            "problem": "5 × 1 = ?",
+            "answer": 5,
+            "user": 5,
+            "correct": true
+          },
+          {
+            "problem": "7 × 7 = ?",
+            "answer": 49,
+            "user": 49,
+            "correct": true
+          },
+          {
+            "problem": "1 × 8 = ?",
+            "answer": 8,
+            "user": 8,
+            "correct": true
+          },
+          {
+            "problem": "3 × 4 = ?",
+            "answer": 12,
+            "user": 12,
+            "correct": true
+          }
+        ]
+      }
+    },
+    "division": {
+      "best": null
+    },
+    "mix": {
+      "best": null
+    }
+  }
+}
