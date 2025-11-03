@@ -1,6 +1,6 @@
 import tkinter as tk
 from ..ui.widgets.containers import MobileFrame
-from ..ui.widgets.buttons import IconRoundButton
+from ..ui.widgets.buttons import IconRoundButton, BackCircleButton
 from ..ui import theme
 from ..utils.assets import load_icon
 from .quiz_play import QuizPlayScreen
@@ -19,8 +19,7 @@ class QuizScreen(MobileFrame):
 			"mix": load_icon("mix.png"),
 		}
 
-		back_btn = tk.Button(self, text="⬅", command=lambda: self.navigator.show("home"), bd=0, bg=theme.BG, fg=theme.TEXT, font=("Segoe UI", 14, "bold"))
-		back_btn.pack(anchor=tk.W, padx=16, pady=(16, 8))
+		BackCircleButton(self, command=lambda: self.navigator.show("home")).pack(anchor=tk.W, padx=16, pady=(16, 8))
 
 		title = tk.Label(self, text="QUIZ\nGAMES", bg=theme.BG, fg="#FF6F61", font=("Segoe UI", 28, "bold"), justify=tk.CENTER)
 		title.pack(pady=(4, 24))

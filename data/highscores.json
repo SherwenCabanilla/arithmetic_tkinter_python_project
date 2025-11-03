@@ -1,7 +1,31 @@
 {
   "modes": {
     "addition": {
-      "best": null
+      "best": {
+        "score": 1,
+        "total": 3,
+        "timestamp": "2025-11-03T16:36:05.401910Z",
+        "questions": [
+          {
+            "problem": "50 + 38 = ?",
+            "answer": 88,
+            "user": 123,
+            "correct": false
+          },
+          {
+            "problem": "95 + 93 = ?",
+            "answer": 188,
+            "user": 123,
+            "correct": false
+          },
+          {
+            "problem": "49 + 41 = ?",
+            "answer": 90,
+            "user": 90,
+            "correct": true
+          }
+        ]
+      }
     },
     "subtraction": {
       "best": {
@@ -64,10 +88,82 @@
       }
     },
     "division": {
-      "best": null
+      "best": {
+        "score": 5,
+        "total": 6,
+        "timestamp": "2025-11-03T16:37:48.321355Z",
+        "questions": [
+          {
+            "problem": "9 ÷ 9 = ?",
+            "answer": 1,
+            "user": 1,
+            "correct": true
+          },
+          {
+            "problem": "8 ÷ 4 = ?",
+            "answer": 2,
+            "user": 2,
+            "correct": true
+          },
+          {
+            "problem": "9 ÷ 1 = ?",
+            "answer": 9,
+            "user": 9,
+            "correct": true
+          },
+          {
+            "problem": "7 ÷ 7 = ?",
+            "answer": 1,
+            "user": 2,
+            "correct": false
+          },
+          {
+            "problem": "3 ÷ 1 = ?",
+            "answer": 3,
+            "user": 3,
+            "correct": true
+          },
+          {
+            "problem": "8 ÷ 4 = ?",
+            "answer": 2,
+            "user": 2,
+            "correct": true
+          }
+        ]
+      }
     },
     "mix": {
-      "best": null
+      "best": {
+        "score": 2,
+        "total": 4,
+        "timestamp": "2025-11-03T16:36:33.817060Z",
+        "questions": [
+          {
+            "problem": "28 + 91 = ?",
+            "answer": 119,
+            "user": 121,
+            "correct": false
+          },
+          {
+            "problem": "88 - 62 = ?",
+            "answer": 26,
+            "user": 2342,
+            "correct": false
+          },
+          {
+            "problem": "3 ÷ 1 = ?",
+            "answer": 3,
+            "user": 3,
+            "correct": true
+          },
+          {
+            "problem": "16 + 15 = ?",
+            "answer": 31,
+            "user": 31,
+            "correct": true
+          }
+        ]
+      }
     }
   }
 }

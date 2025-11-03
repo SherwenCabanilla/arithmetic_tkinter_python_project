@@ -1,2 +1,0 @@
-# Tkinter is included with Python on most platforms
-# Add packages here if you later use them (e.g., Pillow)

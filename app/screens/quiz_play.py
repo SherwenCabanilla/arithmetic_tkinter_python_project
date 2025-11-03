@@ -2,7 +2,7 @@ import tkinter as tk
 import random
 from typing import Tuple, Dict, Any
 from ..ui.widgets.containers import MobileFrame
-from ..ui.widgets.buttons import IconRoundButton
+from ..ui.widgets.buttons import IconRoundButton, BackCircleButton
 from ..ui import theme
 from ..services.high_score_service import HighScoreService
 
@@ -19,8 +19,7 @@ class QuizPlayScreen(MobileFrame):
 		self._checked_current = False
 		self._logs: list[Dict[str, Any]] = []
 
-		back_btn = tk.Button(self, text="⬅", command=self._back, bd=0, bg=theme.BG, fg=theme.TEXT, font=("Segoe UI", 14, "bold"))
-		back_btn.pack(anchor=tk.W, padx=16, pady=(16, 8))
+		BackCircleButton(self, command=self._back).pack(anchor=tk.W, padx=16, pady=(16, 8))
 
 		self.question_label = tk.Label(self, text="Question 1", bg=theme.BG, fg=theme.TEXT, font=("Segoe UI", 12, "bold"))
 		self.question_label.pack(pady=(0, 8))

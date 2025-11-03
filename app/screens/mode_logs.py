@@ -2,6 +2,7 @@ import tkinter as tk
 from datetime import datetime
 from typing import Optional, Dict
 from ..ui.widgets.containers import MobileFrame
+from ..ui.widgets.buttons import BackCircleButton
 from ..ui import theme
 from ..services.high_score_service import HighScoreService
 from ..utils.assets import load_icon
@@ -25,9 +26,7 @@ class ModeLogsScreen(MobileFrame):
 		}
 
 		# Back button
-		back_btn = tk.Button(self, text="⬅", command=lambda: self.navigator.show("scores"), bd=0,
-							bg=theme.BG, fg=theme.TEXT, font=("Segoe UI", 14, "bold"))
-		back_btn.pack(anchor=tk.W, padx=16, pady=(16, 8))
+		BackCircleButton(self, command=lambda: self.navigator.show("scores")).pack(anchor=tk.W, padx=16, pady=(16, 8))
 
 		# Container for content (below back button)
 		self._content_frame = tk.Frame(self, bg=theme.BG)

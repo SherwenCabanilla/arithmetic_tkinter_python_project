@@ -27,3 +27,17 @@ class Navigator:
 				frame.tkraise()
 			else:
 				frame.pack_forget()
+
+	def show_with_context(self, name: str, **context) -> None:
+		"""Show a screen and pass context via an optional apply_context method.
+
+		If the target screen implements apply_context(**kwargs), it will be
+		called after the screen is shown.
+		"""
+		self.show(name)
+		frame = self._screens.get(name)
+		if frame is not None and hasattr(frame, "apply_context"):
+			try:
+				getattr(frame, "apply_context")(**context)  # type: ignore[misc]
+			except Exception:
+				pass

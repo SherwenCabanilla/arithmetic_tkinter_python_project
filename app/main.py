@@ -2,6 +2,7 @@ import tkinter as tk
 try:
 	from .core.navigation import Navigator
 	from .screens.home import HomeScreen
+	from .utils.assets import load_icon
 except ImportError:
 	# Allow running this file directly: python app/main.py
 	import sys
@@ -17,6 +18,19 @@ def main() -> None:
 	# Mobile-like portrait dimensions
 	root.geometry("360x720")
 	root.resizable(False, False)
+
+	# Set window icon if logo exists
+	try:
+		# Window icon: keep small for titlebar
+		icon = load_icon("logo.png") or load_icon("learn_bright_logo.png") or load_icon("learnbright.png")
+		if icon is not None:
+			# If very large, subsample to around 64px width
+			if icon.width() > 64:
+				factor = (icon.width() + 63) // 64
+				icon = icon.subsample(factor, factor)
+			root.iconphoto(True, icon)
+	except Exception:
+		pass
 
 	navigator = Navigator(root)
 	navigator.register_screen("home", HomeScreen)
