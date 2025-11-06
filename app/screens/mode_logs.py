@@ -1,6 +1,7 @@
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
+from kivy.uix.image import Image
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.properties import StringProperty, ListProperty, NumericProperty
@@ -63,6 +64,17 @@ class ModeLogsScreen(Screen):
 		root = BoxLayout(orientation="vertical", padding=[16, 16, 16, 16], spacing=12)
 		root.add_widget(BackCircleButton(diameter=40, icon_name="back_white.png", on_release=lambda _i: self.navigator.show("scores")))
 
+		# Mode title (operation name)
+		mode_titles = {
+			"addition": "[color=76C043][b]ADDITION[/b][/color]",
+			"subtraction": "[color=8E66E3][b]SUBTRACTION[/b][/color]",
+			"multiplication": "[color=11B3D9][b]MULTIPLICATION[/b][/color]",
+			"division": "[color=F2AB0C][b]DIVISION[/b][/color]",
+			"mix": "[color=F25549][b]MIX[/b][/color]"
+		}
+		mode_title = mode_titles.get(mode, mode.upper())
+		root.add_widget(Label(text=mode_title, markup=True, font_size=28, bold=True, size_hint_y=None, height=40))
+
 		best = self.service.get_best(mode)
 		
 		# Date/time stamp in blue
@@ -109,7 +121,22 @@ class ModeLogsScreen(Screen):
 				card = QuestionCard(q, idx, is_correct, icons)
 				grid.add_widget(card)
 		else:
-			grid.add_widget(Label(text="No results yet for this mode.", size_hint_y=None, height=40))
+			# Friendly message for kids when no data available
+			no_data_container = BoxLayout(orientation='vertical', spacing=30, padding=[20, 100, 20, 20], size_hint_y=None, height=400)
+			
+			# Friendly message
+			message_label = Label(
+				text="[color=FF6F61][size=28][b]No scores yet![/b][/size][/color]\n\n[size=20]Ready to play?\nGo take a quiz and\nshow us what you can do![/size]",
+				markup=True,
+				halign='center',
+				valign='middle',
+				size_hint=(1, None),
+				height=200
+			)
+			message_label.bind(size=lambda inst, _: setattr(inst, 'text_size', inst.size))
+			no_data_container.add_widget(message_label)
+			
+			grid.add_widget(no_data_container)
 
 		scroll.add_widget(grid)
 		root.add_widget(scroll)

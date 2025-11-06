@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist-info/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Build outputs - DO NOT UPLOAD EXE FILES
+dist/
+build/
+*.spec
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.bak
+
+# Large video files (optional - uncomment if videos are too large)
+# assets/video/*.mp4
+
+# Icon conversion script output
+assets/images/*.ico
+

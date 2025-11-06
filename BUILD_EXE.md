@@ -2,12 +2,24 @@
 
 ## Quick Start
 
-### 1. Install PyInstaller
+### 1. Install Required Packages
 ```bash
-pip install pyinstaller
+pip install pyinstaller pillow
 ```
 
-### 2. Build the EXE
+### 2. Create the Icon (One Time Only)
+Convert your logo to ICO format:
+```bash
+python convert_icon.py
+```
+This creates `assets/images/logo.ico` which will be your EXE icon.
+
+**Alternative:** If you prefer, use an online converter:
+- Go to https://convertio.co/png-ico/
+- Upload `assets/images/logo.png`
+- Download as `logo.ico` and save to `assets/images/`
+
+### 3. Build the EXE
 From your project root (`D:\python_app`), run:
 ```bash
 pyinstaller learnbright.spec

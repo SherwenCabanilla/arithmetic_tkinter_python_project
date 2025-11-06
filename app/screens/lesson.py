@@ -44,8 +44,12 @@ class LessonScreen(Screen):
 		header.add_widget(Image(source=logo_path, size_hint=(None, None), size=(140, 60)))
 		root.add_widget(header)
 
+
+		# Add spacing between header and title
+		root.add_widget(Widget(size_hint=(1, None), height=20))
+
 		# Title
-		self.title_label = Label(text="", markup=True, font_size=24)
+		self.title_label = Label(text="", markup=True, font_size=32, bold=True, size_hint_y=None, height=50)
 		root.add_widget(self.title_label)
 
 		# Video container (no border)
