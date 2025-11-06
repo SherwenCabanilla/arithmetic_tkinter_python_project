@@ -41,7 +41,7 @@ class LessonScreen(Screen):
 		header.add_widget(BackCircleButton(diameter=40, icon_name="back_white.png", on_release=lambda _i: self._back_to_learn()))
 		header.add_widget(Widget())
 		logo_path = str(get_assets_dir() / "images" / "logo.png")
-		header.add_widget(Image(source=logo_path, size_hint=(None, None), size=(64, 24)))
+		header.add_widget(Image(source=logo_path, size_hint=(None, None), size=(140, 60)))
 		root.add_widget(header)
 
 		# Title

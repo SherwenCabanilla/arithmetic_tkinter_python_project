@@ -1,5 +1,6 @@
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.label import Label
 from kivy.uix.image import Image
 from kivy.uix.widget import Widget
@@ -25,14 +26,24 @@ class LearnScreen(Screen):
 		header.add_widget(Widget())
 		logo_small = resolve_image_path("learnbright.png") or resolve_image_path("logo.png")
 		if logo_small:
-			header.add_widget(Image(source=logo_small, size_hint=(None, None), size=(64, 24), allow_stretch=True, keep_ratio=True))
+			header.add_widget(Image(source=logo_small, size_hint=(None, None), size=(140, 60), allow_stretch=True, keep_ratio=True))
 		root.add_widget(header)
 
-		# Title
-		root.add_widget(Label(text="[color=E65100][b]Watch Video\nTutorial[/b][/color]", markup=True, font_size=26))
+
+		# Add spacing between header and title
+		root.add_widget(Widget(size_hint=(1, None), height=20))
+
+		# Title - Watch Video Tutorial image
+		title_img = resolve_image_path("watch.png")
+		if title_img:
+			title_container = AnchorLayout(size_hint=(1, None), height=160, anchor_x='center', anchor_y='center', padding=[0, 15, 0, 30])
+			title_container.add_widget(Image(source=title_img, size_hint=(None, None), size=(500, 230), allow_stretch=True, keep_ratio=True))
+			root.add_widget(title_container)
+		else:
+			root.add_widget(Label(text="[color=E65100][b]Watch Video\nTutorial[/b][/color]", markup=True, font_size=26))
 
 		# Buttons
-		root.add_widget(IconRoundButton(text="Addition", icon_name="plus.png", bg_color=self._hex_to_rgba("#76C043"), hover_color=self._hex_to_rgba("#7FD04A"), on_release=lambda _i: self._open_topic("addition")))
+		root.add_widget(IconRoundButton(text="Addition", icon_name="addition.png", bg_color=self._hex_to_rgba("#76C043"), hover_color=self._hex_to_rgba("#7FD04A"), on_release=lambda _i: self._open_topic("addition")))
 		root.add_widget(IconRoundButton(text="Subtraction", icon_name="minus.png", bg_color=self._hex_to_rgba("#8E66E3"), hover_color=self._hex_to_rgba("#9A74EE"), on_release=lambda _i: self._open_topic("subtraction")))
 		root.add_widget(IconRoundButton(text="Multiplication", icon_name="times.png", bg_color=self._hex_to_rgba("#11B3D9"), hover_color=self._hex_to_rgba("#1AC2EA"), on_release=lambda _i: self._open_topic("multiplication")))
 		root.add_widget(IconRoundButton(text="Division", icon_name="divide.png", bg_color=self._hex_to_rgba("#F2AB0C"), hover_color=self._hex_to_rgba("#FFC326"), on_release=lambda _i: self._open_topic("division")))

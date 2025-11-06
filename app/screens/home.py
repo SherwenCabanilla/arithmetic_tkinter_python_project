@@ -35,10 +35,10 @@ class HomeScreen(Screen):
 		root.add_widget(Widget(size_hint_y=None, height=20))
 
 		# Buttons
-		root.add_widget(IconRoundButton(text="Learn and Watch", icon_name="play.png", on_release=lambda _i: self._go_learn()))
-		root.add_widget(IconRoundButton(text="Start Quiz", icon_name="brain.png", on_release=lambda _i: self._go_quiz()))
-		root.add_widget(IconRoundButton(text="View High Score", icon_name="chart.png", on_release=lambda _i: self._go_scores()))
-		root.add_widget(IconRoundButton(text="Exit", icon_name="exit.png", on_release=lambda _i: self._exit_app()))
+		root.add_widget(IconRoundButton(text="Learn and Watch", icon_name="homeplayicon.png", on_release=lambda _i: self._go_learn()))
+		root.add_widget(IconRoundButton(text="Start Quiz", icon_name="homeideaicon.png", on_release=lambda _i: self._go_quiz()))
+		root.add_widget(IconRoundButton(text="View High Score", icon_name="homeideaincreaseicon.png", on_release=lambda _i: self._go_scores()))
+		root.add_widget(IconRoundButton(text="Exit", icon_name="homeexiticon.png", on_release=lambda _i: self._exit_app()))
 
 		# Flexible bottom spacer to keep the group centered
 		root.add_widget(Widget(size_hint_y=1))

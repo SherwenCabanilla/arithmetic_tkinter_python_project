@@ -2,86 +2,50 @@
   "modes": {
     "addition": {
       "best": {
-        "score": 1,
-        "total": 3,
-        "timestamp": "2025-11-03T16:36:05.401910Z",
+        "score": 2,
+        "total": 2,
+        "timestamp": "2025-11-07T01:14:34.877573",
         "questions": [
           {
-            "problem": "50 + 38 = ?",
-            "answer": 88,
-            "user": 123,
-            "correct": false
+            "problem": "67 + 80 = ?",
+            "answer": 147,
+            "user": 147,
+            "correct": true
           },
           {
-            "problem": "95 + 93 = ?",
-            "answer": 188,
-            "user": 123,
-            "correct": false
-          },
-          {
-            "problem": "49 + 41 = ?",
-            "answer": 90,
-            "user": 90,
+            "problem": "99 + 2 = ?",
+            "answer": 101,
+            "user": 101,
             "correct": true
           }
         ]
       }
     },
     "subtraction": {
-      "best": {
-        "score": 1,
-        "total": 2,
-        "timestamp": "2025-11-01T06:55:08.140430Z",
-        "questions": [
-          {
-            "problem": "50 - 29 = ?",
-            "answer": 21,
-            "user": 21,
-            "correct": true
-          },
-          {
-            "problem": "53 - 26 = ?",
-            "answer": 27,
-            "user": 32,
-            "correct": false
-          }
-        ]
-      }
+      "best": null
     },
     "multiplication": {
       "best": {
-        "score": 5,
-        "total": 5,
-        "timestamp": "2025-11-01T06:48:49.199871Z",
+        "score": 3,
+        "total": 3,
+        "timestamp": "2025-11-07T01:19:33.590163",
         "questions": [
           {
-            "problem": "4 × 5 = ?",
-            "answer": 20,
-            "user": 20,
+            "problem": "1 × 1 = ?",
+            "answer": 1,
+            "user": 1,
             "correct": true
           },
           {
-            "problem": "5 × 1 = ?",
-            "answer": 5,
-            "user": 5,
+            "problem": "4 × 7 = ?",
+            "answer": 28,
+            "user": 28,
             "correct": true
           },
           {
-            "problem": "7 × 7 = ?",
-            "answer": 49,
-            "user": 49,
-            "correct": true
-          },
-          {
-            "problem": "1 × 8 = ?",
-            "answer": 8,
-            "user": 8,
-            "correct": true
-          },
-          {
-            "problem": "3 × 4 = ?",
-            "answer": 12,
-            "user": 12,
+            "problem": "9 × 7 = ?",
+            "answer": 63,
+            "user": 63,
             "correct": true
           }
         ]
@@ -89,20 +53,14 @@
     },
     "division": {
       "best": {
-        "score": 5,
-        "total": 6,
-        "timestamp": "2025-11-03T16:37:48.321355Z",
+        "score": 2,
+        "total": 2,
+        "timestamp": "2025-11-07T01:17:49.941732",
         "questions": [
           {
-            "problem": "9 ÷ 9 = ?",
-            "answer": 1,
-            "user": 1,
-            "correct": true
-          },
-          {
-            "problem": "8 ÷ 4 = ?",
-            "answer": 2,
-            "user": 2,
+            "problem": "4 ÷ 1 = ?",
+            "answer": 4,
+            "user": 4,
             "correct": true
           },
           {
@@ -110,56 +68,20 @@
             "answer": 9,
             "user": 9,
             "correct": true
-          },
-          {
-            "problem": "7 ÷ 7 = ?",
-            "answer": 1,
-            "user": 2,
-            "correct": false
-          },
-          {
-            "problem": "3 ÷ 1 = ?",
-            "answer": 3,
-            "user": 3,
-            "correct": true
-          },
-          {
-            "problem": "8 ÷ 4 = ?",
-            "answer": 2,
-            "user": 2,
-            "correct": true
           }
         ]
       }
     },
     "mix": {
       "best": {
-        "score": 2,
-        "total": 4,
-        "timestamp": "2025-11-03T16:36:33.817060Z",
+        "score": 1,
+        "total": 1,
+        "timestamp": "2025-11-07T01:19:54.040103",
         "questions": [
           {
-            "problem": "28 + 91 = ?",
-            "answer": 119,
-            "user": 121,
-            "correct": false
-          },
-          {
-            "problem": "88 - 62 = ?",
-            "answer": 26,
-            "user": 2342,
-            "correct": false
-          },
-          {
-            "problem": "3 ÷ 1 = ?",
-            "answer": 3,
-            "user": 3,
-            "correct": true
-          },
-          {
-            "problem": "16 + 15 = ?",
-            "answer": 31,
-            "user": 31,
+            "problem": "4 × 4 = ?",
+            "answer": 16,
+            "user": 16,
             "correct": true
           }
         ]

@@ -21,7 +21,7 @@ class IconRoundButton(ButtonBehavior, BoxLayout):
 	with_icon = BooleanProperty(True)
 
 	def __init__(self, text: str, icon_name: str = "", bg_color=None, hover_color=None, text_color=None, **kwargs):
-		super().__init__(orientation="horizontal", padding=[18, 0, 18, 0], spacing=10, size_hint=(1, None), height=self.height_dp, **kwargs)
+		super().__init__(orientation="horizontal", padding=[12, 0, 12, 0], spacing=12, size_hint=(0.8, None), height=self.height_dp, pos_hint={'center_x': 0.5}, **kwargs)
 		self.text = text
 		self.icon_name = icon_name
 		self.bg_color = self._hex_to_rgba(theme.PRIMARY) if bg_color is None else bg_color
@@ -36,8 +36,12 @@ class IconRoundButton(ButtonBehavior, BoxLayout):
 		if self.icon_name:
 			icon_path = resolve_image_path(self.icon_name)
 			if icon_path:
-				self.add_widget(Image(source=icon_path, size_hint=(None, None), size=(24, 24), allow_stretch=True, keep_ratio=True))
-		label = Label(text=self.text, color=self.text_color)
+				# Wrap icon in a centered container
+				from kivy.uix.anchorlayout import AnchorLayout
+				icon_container = AnchorLayout(size_hint=(None, 1), width=28, anchor_x='center', anchor_y='center')
+				icon_container.add_widget(Image(source=icon_path, size_hint=(None, None), size=(28, 28), allow_stretch=True, keep_ratio=True))
+				self.add_widget(icon_container)
+		label = Label(text=self.text, color=self.text_color, font_size='20sp', bold=True)
 		self.add_widget(label)
 
 	def _draw_background(self, rgba):

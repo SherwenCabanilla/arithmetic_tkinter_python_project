@@ -29,19 +29,22 @@ class HighScoreService:
 	def _save(self) -> None:
 		write_json(self.path, self._cache)
 
-	def record_attempt(self, mode: str, score: int, total: int, questions: List[Dict[str, Any]]) -> None:
+	def record_attempt(self, mode: str, score: int, total: int, questions: List[Dict[str, Any]]) -> bool:
+		"""Record a quiz attempt. Returns True if it's a new high score, False otherwise."""
 		if mode not in self._cache["modes"]:
 			self._cache["modes"][mode] = {"best": None}
 		best = self._cache["modes"][mode]["best"]
 		# Only save if it's a new high score
-		if best is None or score > best.get("score", 0):
+		is_new_high_score = best is None or score > best.get("score", 0)
+		if is_new_high_score:
 			self._cache["modes"][mode]["best"] = {
 				"score": int(score),
 				"total": int(total),
-				"timestamp": datetime.utcnow().isoformat() + "Z",
+				"timestamp": datetime.now().isoformat(),
 				"questions": questions,
 			}
 			self._save()
+		return is_new_high_score
 
 	def get_best(self, mode: str) -> Dict | None:
 		self.refresh()  # Always get fresh data

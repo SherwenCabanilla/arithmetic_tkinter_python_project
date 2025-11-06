@@ -1,0 +1,184 @@
+<QuestionCard>:
+	size_hint_y: None
+	height: 180
+	padding: [0, 0, 0, 0]
+	spacing: 0
+	orientation: 'vertical'
+	
+	canvas.before:
+		Color:
+			rgba: 1, 1, 1, 1
+		RoundedRectangle:
+			pos: self.pos
+			size: self.size
+			radius: [8,]
+		Color:
+			rgba: root.border_color
+		Line:
+			rounded_rectangle: self.x, self.y, self.width, self.height, 8
+			width: 2
+	
+	# Top padding
+	Widget:
+		size_hint_y: None
+		height: 10
+	
+	# Top row: Badge + Question + Star
+	BoxLayout:
+		size_hint_y: None
+		height: 52
+		padding: [20, 10, 12, 0]
+		spacing: 10
+		
+		# Number badge circle
+		FloatLayout:
+			size_hint: None, None
+			size: 42, 42
+			canvas.before:
+				Color:
+					rgba: root.border_color
+				Ellipse:
+					pos: self.pos
+					size: self.size
+			
+			Label:
+				text: str(root.index)
+				color: 1, 1, 1, 1
+				font_size: '22sp'
+				bold: True
+				pos: self.parent.pos
+				size: self.parent.size
+		
+		# Question text
+		Label:
+			text: '[b]' + root.question_text + '[/b]'
+			markup: True
+			color: 0.06, 0.71, 0.87, 1
+			font_size: '28sp'
+		
+		# Star icon
+		Image:
+			source: root.top_icon
+			size_hint: None, None
+			size: 42, 42
+	
+	# Small spacing
+	Widget:
+		size_hint_y: None
+		height: 2
+	
+	# "Your Answer:" label
+	BoxLayout:
+		size_hint_y: None
+		height: 16
+		padding: [0, 0, 0, 0]
+		
+		Label:
+			text: 'Your Answer:'
+			color: 0.3, 0.3, 0.3, 1
+			font_size: '11sp'
+			halign: 'center'
+	
+	# Your answer box
+	AnchorLayout:
+		anchor_x: 'center'
+		size_hint_y: None
+		height: 30
+		padding: [0, 0, 0, 0]
+		
+		BoxLayout:
+			size_hint: None, None
+			size: 75, 30
+			canvas.before:
+				Color:
+					rgba: 1, 1, 1, 1
+				RoundedRectangle:
+					pos: self.pos
+					size: self.size
+					radius: [5,]
+				Color:
+					rgba: root.your_box_color
+				Line:
+					rounded_rectangle: self.x, self.y, self.width, self.height, 5
+					width: .5
+			
+			Label:
+				text: root.your_answer
+				color: root.your_box_color
+				font_size: '20sp'
+				bold: True
+	
+	# Small spacing
+	Widget:
+		size_hint_y: None
+		height: 2
+	
+	# "Correct Answer:" label
+	BoxLayout:
+		size_hint_y: None
+		height: 16
+		padding: [0, 0, 0, 0]
+		
+		Label:
+			text: 'Correct Answer:'
+			color: 0.3, 0.3, 0.3, 1
+			font_size: '11sp'
+			halign: 'center'
+	
+	# Correct answer box
+	AnchorLayout:
+		anchor_x: 'center'
+		size_hint_y: None
+		height: 30
+		padding: [0, 0, 0, 0]
+		
+		BoxLayout:
+			size_hint: None, None
+			size: 75, 30
+			canvas.before:
+				Color:
+					rgba: 0.92, 0.98, 0.92, 1
+				RoundedRectangle:
+					pos: self.pos
+					size: self.size
+					radius: [5,]
+				Color:
+					rgba: 0.13, 0.70, 0.00, 1
+				Line:
+					rounded_rectangle: self.x, self.y, self.width, self.height, 5
+					width: .5
+			
+			Label:
+				text: root.correct_answer
+				color: 0.13, 0.70, 0.00, 1
+				font_size: '20sp'
+				bold: True
+	
+	# Small spacing before status
+	Widget:
+		size_hint_y: None
+		height: 2
+	
+	# Status text at bottom right with emoji
+	BoxLayout:
+		orientation: 'horizontal'
+		size_hint_y: None
+		height: 30
+		padding: [0, 0, 15, 5]
+		spacing: 5
+		
+		Widget:
+		
+		Label:
+			text: root.status_text
+			markup: True
+			color: root.border_color
+			font_size: '16sp'
+			size_hint: None, None
+			size: self.texture_size
+		
+		Image:
+			source: root.status_icon
+			size_hint: None, None
+			size: 28, 28
+
