@@ -1,68 +1,27 @@
-# Learn Bright (Python Tkinter)
+# Learn Bright (Kivy)
 
-A minimal, mobile-style arithmetic learning app scaffold built with Python and Tkinter. Includes screens for Learn and Watch, Start Quiz, View High Score, and Exit. High scores are stored in a local JSON file.
+This project has been migrated to Kivy for mobile-friendly UI and packaging.
 
-## Quick Start
+## Requirements
+- Python 3.10+
+- Kivy
 
-```bash
-python -m venv .venv
-# Windows PowerShell
-. .venv/Scripts/Activate.ps1
-pip install -r requirements.txt
-python -m app
+Install Kivy on Windows (PowerShell):
+
+```powershell
+python -m pip install --upgrade pip
+python -m pip install kivy[base] kivy_examples
 ```
 
-## Project Structure
+## Run locally
 
-```
-app/
-  __init__.py
-  main.py                 # Entrypoint (python -m app)
-  config/
-    __init__.py
-    paths.py              # App paths, data locations
-  core/
-    __init__.py
-    navigation.py         # Simple screen navigator/controller
-  models/
-    __init__.py
-    high_score.py         # Data model(s)
-  screens/
-    __init__.py
-    home.py               # Home with 4 buttons
-    learn.py
-    quiz.py
-    high_scores.py
-  services/
-    __init__.py
-    high_score_service.py # JSON-backed storage
-  ui/
-    __init__.py
-    theme.py              # Colors, sizing, typography
-    widgets/
-      __init__.py
-      buttons.py          # Reusable primary button
-      containers.py       # Frame helpers, scroll container
-  utils/
-    __init__.py
-    json_store.py         # JSON read/write helpers (atomic-ish)
-assets/
-  images/                 # Logos/icons (optional)
-  fonts/                  # Optional custom fonts
-data/
-  highscores.json         # JSON store (created/seeded on first run)
-requirements.txt
-README.md
+```powershell
+python -m app.main
 ```
 
-## Notes
+## Assets
+Put images under `assets/images/`. The app icon is expected at `assets/images/learnbright.png` (optional).
 
-- This scaffold prefers simple modules over frameworks for clarity.
-- The window is sized to resemble a mobile phone (portrait) for desktop.
-- JSON storage is local-only and not concurrency-safe across processes.
-
-## Next Steps
-
-- Implement actual learning content and quiz logic.
-- Replace placeholder UI with your designs and assets.
-- Extend `high_score_service.py` to keep top-N, timestamps, player names, etc.
+## Mobile builds
+- Android: use Buildozer on WSL/Linux. See Kivy docs: `https://kivy.org/doc/stable/guide/packaging-android.html`.
+- iOS: Xcode + kivy-ios. See docs: `https://kivy.org/doc/stable/guide/packaging-ios.html`.

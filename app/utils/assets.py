@@ -1,7 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Optional
-import tkinter as tk
 try:
 	from ..config.paths import get_assets_dir
 except ImportError:
@@ -12,34 +11,16 @@ except ImportError:
 	from app.config.paths import get_assets_dir
 
 
-def load_icon(filename: str) -> Optional[tk.PhotoImage]:
-	"""Load PNG from assets/images, return None on failure.
-	Keeps a reference by returning the PhotoImage to caller.
-	"""
-	try:
-		path = get_assets_dir() / "images" / filename
-		if not path.exists():
-			return None
-		return tk.PhotoImage(file=str(path))
-	except Exception:
-		return None
+def resolve_image_path(filename: str) -> Optional[str]:
+	"""Return full path to an image file under assets/images if it exists."""
+	path = get_assets_dir() / "images" / filename
+	return str(path) if path.exists() else None
 
 
-def load_icon_max_width(filename: str, max_width: int) -> Optional[tk.PhotoImage]:
-	"""Load PNG and scale it down (integer subsample) if wider than max_width.
-
-	This avoids requiring Pillow, using Tk's built-in subsample. The result keeps
-	its own reference just like load_icon.
-	"""
-	img = load_icon(filename)
-	if img is None:
-		return None
-	try:
-		w = img.width()
-		if w > max_width and max_width > 0:
-			# Ceil division to compute integer downscale factor
-			factor = (w + max_width - 1) // max_width
-			img = img.subsample(factor, factor)
-		return img
-	except Exception:
-		return img
+def first_existing_image(*filenames: str) -> Optional[str]:
+	"""Return the first existing image path from provided filenames."""
+	for name in filenames:
+		p = resolve_image_path(name)
+		if p:
+			return p
+	return None

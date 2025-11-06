@@ -1,145 +1,113 @@
-import tkinter as tk
-from typing import Optional
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.widget import Widget
+from kivy.uix.floatlayout import FloatLayout
+from kivy.properties import ListProperty, StringProperty, NumericProperty, BooleanProperty
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.graphics import Color, RoundedRectangle, Ellipse
+from ...utils.assets import resolve_image_path
 from .. import theme
-from ...utils.assets import load_icon
 
 
-class PrimaryButton(tk.Button):
-	def __init__(self, master: tk.Misc, text: str, command=None):
-		super().__init__(
-			master,
-			text=text,
-			command=command,
-			bg=theme.PRIMARY,
-			fg=theme.PRIMARY_TEXT,
-			activebackground=theme.PRIMARY,
-			activeforeground=theme.PRIMARY_TEXT,
-			bd=0,
-			padx=16,
-			pady=12,
-			font=theme.BUTTON_FONT,
-		)
+class IconRoundButton(ButtonBehavior, BoxLayout):
+	text = StringProperty("")
+	icon_name = StringProperty("")
+	radius = NumericProperty(16)
+	bg_color = ListProperty([0, 0, 0, 1])
+	hover_color = ListProperty([0, 0, 0, 1])
+	text_color = ListProperty([1, 1, 1, 1])
+	height_dp = NumericProperty(56)
+	with_icon = BooleanProperty(True)
+
+	def __init__(self, text: str, icon_name: str = "", bg_color=None, hover_color=None, text_color=None, **kwargs):
+		super().__init__(orientation="horizontal", padding=[18, 0, 18, 0], spacing=10, size_hint=(1, None), height=self.height_dp, **kwargs)
+		self.text = text
+		self.icon_name = icon_name
+		self.bg_color = self._hex_to_rgba(theme.PRIMARY) if bg_color is None else bg_color
+		self.hover_color = self._hex_to_rgba("#00B7EA") if hover_color is None else hover_color
+		self.text_color = self._hex_to_rgba(theme.PRIMARY_TEXT) if text_color is None else text_color
+		self._bg_rect = None
+		self._draw_background(self.bg_color)
+		self._build_content()
+
+	def _build_content(self):
+		self.clear_widgets()
+		if self.icon_name:
+			icon_path = resolve_image_path(self.icon_name)
+			if icon_path:
+				self.add_widget(Image(source=icon_path, size_hint=(None, None), size=(24, 24), allow_stretch=True, keep_ratio=True))
+		label = Label(text=self.text, color=self.text_color)
+		self.add_widget(label)
+
+	def _draw_background(self, rgba):
+		self.canvas.before.clear()
+		with self.canvas.before:
+			Color(*rgba)
+			self._bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[self.radius])
+		self.bind(pos=self._update_rect, size=self._update_rect)
+
+	def _update_rect(self, *_):
+		if self._bg_rect is not None:
+			self._bg_rect.pos = self.pos
+			self._bg_rect.size = self.size
+
+	def on_press(self):
+		self._draw_background(self.hover_color)
+
+	def on_release(self):
+		self._draw_background(self.bg_color)
+
+	def _hex_to_rgba(self, hex_color: str, alpha: float = 1.0):
+		hex_color = hex_color.lstrip('#')
+		lv = len(hex_color)
+		rgb = tuple(int(hex_color[i:i + lv // 3], 16) / 255.0 for i in range(0, lv, lv // 3))
+		return [*rgb, alpha]
 
 
-class IconRoundButton(tk.Canvas):
-	"""Rounded rectangle button with optional left icon.
+class BackCircleButton(ButtonBehavior, FloatLayout):
+	diameter = NumericProperty(40)
+	bg_color = ListProperty([1, 1, 1, 1])
+	hover_color = ListProperty([0.94, 0.94, 0.94, 1])
+	icon_name = StringProperty("back_white.png")
 
-	Drawn using a Canvas so we can have rounded corners without external deps.
-	"""
-
-	def __init__(self, master: tk.Misc, text: str, command=None, icon: Optional[tk.PhotoImage] = None,
-				width: int = 280, height: int = 56, radius: int = 16,
-				bg_color: str = None, hover_color: str = None):
-		self.width = width
-		self.height = height
-		self.radius = radius
-		self.command = command
-		self.icon_image = icon
-		self.bg_color = bg_color or theme.PRIMARY
-		self.hover_color = hover_color or "#00B7EA"
-		self.disabled_color = "#BDBDBD"
-		self.enabled = True
-		super().__init__(master, width=width, height=height, highlightthickness=0, bg=theme.BG)
-		self._draw(text)
-		self._bind_events()
-
-	def _rounded_rect(self, x1, y1, x2, y2, r, **kwargs):
-		points = [
-			x1+r, y1,
-			x2-r, y1,
-			x2, y1,
-			x2, y1+r,
-			x2, y2-r,
-			x2, y2,
-			x2-r, y2,
-			x1+r, y2,
-			x1, y2,
-			x1, y2-r,
-			x1, y1+r,
-			x1, y1,
-		]
-		return self.create_polygon(points, smooth=True, **kwargs)
-
-	def _draw(self, text: str) -> None:
-		self.bg_id = self._rounded_rect(2, 2, self.width-2, self.height-2, self.radius, fill=self.bg_color, outline="")
-		padding_left = 18
-		if self.icon_image is not None:
-			self.create_image(18, self.height//2, image=self.icon_image, anchor=tk.W)
-			padding_left = 18 + self.icon_image.width() + 10
-		self.text_id = self.create_text(padding_left, self.height//2, text=text, fill=theme.PRIMARY_TEXT, anchor=tk.W, font=theme.BUTTON_FONT)
-
-	def _bind_events(self) -> None:
-		self.bind("<Button-1>", self._on_click)
-		self.bind("<Enter>", self._on_enter)
-		self.bind("<Leave>", self._on_leave)
-
-	def _on_enter(self, _e):
-		if self.enabled:
-			self.itemconfig(self.bg_id, fill=self.hover_color)
-
-	def _on_leave(self, _e):
-		self.itemconfig(self.bg_id, fill=self.bg_color if self.enabled else self.disabled_color)
-
-	def _on_click(self, _event) -> None:
-		if self.enabled and callable(self.command):
-			self.command()
-
-	def set_enabled(self, enabled: bool) -> None:
-		self.enabled = enabled
-		self.itemconfig(self.bg_id, fill=self.bg_color if enabled else self.disabled_color)
-
-
-class BackCircleButton(tk.Canvas):
-	"""Circular blue back button with optional PNG icon for perfection.
-
-	If an icon named 'back_white.png' (or provided icon_name) exists under
-	assets/images, it is used; otherwise a vector arrow is drawn.
-	"""
-
-	def __init__(self, master: tk.Misc, command=None, diameter: int = 36, icon_name: Optional[str] = "back_white.png", bg_color: Optional[str] = None, hover_color: Optional[str] = None, show_circle: bool = False):
+	def __init__(self, diameter: int = 30, icon_name: str = "back_white.png", **kwargs):
+		super().__init__(size_hint=(None, None), size=(diameter, diameter), **kwargs)
 		self.diameter = diameter
-		self.command = command
-		super().__init__(master, width=diameter, height=diameter, highlightthickness=0, bg=theme.BG)
-		self._show_circle = bool(show_circle)
-		self._base_color = bg_color or theme.PRIMARY
-		self._hover_color = hover_color or "#10B6DF"
-		# Try to load icon
-		self._icon = load_icon(icon_name) if icon_name else None
-		self._draw()
-		self._bind_events()
+		self.icon_name = icon_name
+		self._circle = None
+		self._icon_widget = None
+		self._draw(self.bg_color)
 
-	def _draw(self) -> None:
-		self.circle_id = None
-		if self._show_circle:
-			self.circle_id = self.create_oval(0, 0, self.diameter, self.diameter, fill=self._base_color, outline="")
-		if self._icon is not None:
-			# Center the provided icon; keep a reference so it isn't GC'd
-			self.create_image(self.diameter//2, self.diameter//2, image=self._icon)
-		else:
-			# Draw a centered left-pointing arrow (shaft + triangle head)
-			d = self.diameter
-			pad = int(d * 0.26)
-			shaft_h = int(d * 0.18)
-			shaft_left = pad + int(d * 0.22)
-			shaft_right = d - pad
-			center_y = d // 2
-			# Shaft rectangle
-			self.create_rectangle(shaft_left, center_y - shaft_h//2, shaft_right, center_y + shaft_h//2, fill=theme.PRIMARY_TEXT, outline="")
-			# Triangle head pointing left
-			head_left = pad
-			points = [
-				shaft_left, center_y - shaft_h,
-				shaft_left, center_y + shaft_h,
-				head_left, center_y,
-			]
-			self.create_polygon(points, fill=theme.PRIMARY_TEXT, outline="")
+	def _draw(self, fill_rgba):
+		self.canvas.before.clear()
+		with self.canvas.before:
+			Color(*fill_rgba)
+			self._circle = Ellipse(pos=self.pos, size=self.size)
+		self.bind(pos=self._update_graphics, size=self._update_graphics)
+		self._set_icon()
 
-	def _bind_events(self) -> None:
-		self.bind("<Button-1>", self._on_click)
-		if self.circle_id is not None:
-			self.bind("<Enter>", lambda _e: self.itemconfig(self.circle_id, fill=self._hover_color))
-			self.bind("<Leave>", lambda _e: self.itemconfig(self.circle_id, fill=self._base_color))
+	def _set_icon(self):
+		if self._icon_widget is not None:
+			self.remove_widget(self._icon_widget)
+		path = resolve_image_path(self.icon_name)
+		if path:
+			self._icon_widget = Image(source=path, size_hint=(None, None), size=(int(self.diameter*0.6), int(self.diameter*0.6)), pos_hint={"center_x": 0.5, "center_y": 0.5})
+			self.add_widget(self._icon_widget)
 
-	def _on_click(self, _e):
-		if callable(self.command):
-			self.command()
+	def _update_graphics(self, *_):
+		if self._circle is not None:
+			self._circle.pos = self.pos
+			self._circle.size = self.size
+
+	def on_press(self):
+		self._draw(self.hover_color)
+
+	def on_release(self):
+		self._draw(self.bg_color)
+
+	def _hex_to_rgba(self, hex_color: str, alpha: float = 1.0):
+		hex_color = hex_color.lstrip('#')
+		lv = len(hex_color)
+		rgb = tuple(int(hex_color[i:i + lv // 3], 16) / 255.0 for i in range(0, lv, lv // 3))
+		return [*rgb, alpha]

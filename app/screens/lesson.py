@@ -5,145 +5,143 @@ import os
 import webbrowser
 from pathlib import Path
 
-from ..ui.widgets.containers import MobileFrame
+from kivy.uix.screenmanager import Screen
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.widget import Widget
+from kivy.uix.video import Video
+from kivy.uix.button import Button
+from kivy.graphics import Color, RoundedRectangle, Line
+from kivy.core.window import Window
+from ..config.paths import get_assets_dir
 from ..ui.widgets.buttons import BackCircleButton
-from ..ui import theme
-from ..config.paths import get_assets_dir, get_project_root
+from ..utils.assets import resolve_image_path
 
 
-class LessonScreen(MobileFrame):
-	"""Topic detail screen with embedded video and playback controls."""
-
-	def __init__(self, master: tk.Misc, navigator) -> None:
-		super().__init__(master)
+class LessonScreen(Screen):
+	def __init__(self, name: str, navigator, **kwargs):
+		super().__init__(name=name, **kwargs)
 		self.navigator = navigator
-		self.topic: str = ""
+		self.topic = ""
+		self.video_widget = None
 		self.title_label = None
-		self._vlc = None
-		self._vlc_instance = None
-		self._vlc_player = None
-		self._tkvideo_player = None  # fallback player
+		self.summary_label = None
+		self._is_playing = False
+		self.controls_bar = None
+		self._build()
 
-		BackCircleButton(self, command=self._go_back).pack(anchor=tk.W, padx=16, pady=(16, 8))
+	def _build(self) -> None:
+		Window.size = (360, 720)
+		root = BoxLayout(orientation="vertical", padding=[16, 16, 16, 16], spacing=12)
 
-		# Friendly, kid-focused title
-		self.title_label = tk.Label(self, text="", bg=theme.BG, fg="#FF6F00", font=theme.TITLE_FONT)
-		self.title_label.pack(pady=(0, 8))
-		subtitle = tk.Label(self, text="Let's learn with a short video!", bg=theme.BG, fg="#8D6E63", font=theme.SUBTITLE_FONT)
-		subtitle.pack(pady=(0, 8))
+		# Header: back and small logo
+		header = BoxLayout(orientation="horizontal", size_hint=(1, None), height=52)
+		header.add_widget(BackCircleButton(diameter=40, icon_name="back_white.png", on_release=lambda _i: self._back_to_learn()))
+		header.add_widget(Widget())
+		logo_path = str(get_assets_dir() / "images" / "logo.png")
+		header.add_widget(Image(source=logo_path, size_hint=(None, None), size=(64, 24)))
+		root.add_widget(header)
 
-		# Rounded video frame (colorful border)
-		frame_canvas = tk.Canvas(self, width=312, height=192, bg=theme.BG, highlightthickness=0)
-		frame_canvas.pack(pady=(0, 12))
-		# draw rounded rect border
-		def rounded_rect(c, x1, y1, x2, y2, r, color):
-			points = [
-				x1+r, y1,
-				x2-r, y1,
-				x2, y1,
-				x2, y1+r,
-				x2, y2-r,
-				x2, y2,
-				x2-r, y2,
-				x1+r, y2,
-				x1, y2,
-				x1, y2-r,
-				x1, y1+r,
-				x1, y1,
-			]
-			return c.create_polygon(points, smooth=True, fill=color, outline="")
-		radius = 18
-		rounded_rect(frame_canvas, 2, 2, 310, 190, radius, "#FFA726")  # orange border
+		# Title
+		self.title_label = Label(text="", markup=True, font_size=24)
+		root.add_widget(self.title_label)
 
-		# Actual video area sits inside with small margin
-		self.video_canvas = tk.Canvas(frame_canvas, width=300, height=180, bg="#000000", highlightthickness=0)
-		self.video_canvas.place(x=6, y=6)
+		# Video container (no border)
+		video_frame = FloatLayout(size_hint=(1, None), height=200)
 
-		# Big colorful controls
-		controls = tk.Frame(self, bg=theme.BG)
-		controls.pack(pady=(0, 16))
-		self.play_pause_btn = tk.Button(controls, text="▶ Play", command=self._toggle_play, bd=0, bg="#17B3E6", fg="#FFFFFF", font=theme.BUTTON_FONT, padx=22, pady=10)
-		self.play_pause_btn.pack(side=tk.LEFT, padx=8)
-		self.stop_btn = tk.Button(controls, text="⏹ Stop", command=self._stop, bd=0, bg="#FF5252", fg="#FFFFFF", font=theme.BUTTON_FONT, padx=22, pady=10)
-		self.stop_btn.pack(side=tk.LEFT, padx=8)
-
-		# Kid-friendly short summary container (below controls)
-		self.summary_outer = tk.Frame(self, bg=theme.BG, highlightbackground="#8E66E3", highlightthickness=2)
-		self.summary_outer.pack(padx=12, pady=(0, 16), fill=tk.X)
-		self.summary_inner = tk.Frame(self.summary_outer, bg="#FFFFFF")
-		self.summary_inner.pack(padx=10, pady=10, fill=tk.X)
-		self.summary_title = tk.Label(self.summary_inner, text="Short Summary:", bg="#FFFFFF", fg=theme.TEXT, font=("Segoe UI", 11, "bold"), anchor=tk.W)
-		self.summary_title.pack(anchor=tk.W)
-		self.summary_text = tk.Label(self.summary_inner, text="", bg="#FFFFFF", fg=theme.TEXT, font=("Segoe UI", 10), justify=tk.LEFT, wraplength=280)
-		self.summary_text.pack(anchor=tk.W, pady=(4, 0))
+		# Inner padded area
+		inner = FloatLayout(size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
+		video_frame.add_widget(inner)
 
 
-		self._prepare_vlc()
-		self._prepare_tkvideo_fallback()
+		# Poster thumbnail (shown until playback)
+		self.poster = Image(source="", allow_stretch=True, keep_ratio=True, size_hint=(1, 1), pos_hint={"x": 0, "y": 0})
+		inner.add_widget(self.poster)
+
+		# Video widget (fit inside container)
+		self.video_widget = Video(source="", state="stop", options={"eos": "pause"})
+		self.video_widget.fit_mode = "contain"
+		self.video_widget.size_hint = (1, 1)
+		self.video_widget.pos_hint = {"x": 0, "y": 0}
+		self.video_widget.opacity = 0
+		inner.add_widget(self.video_widget)
+
+		root.add_widget(video_frame)
+
+		# Controls below the video, centered
+		self.controls_bar = BoxLayout(orientation="horizontal", size_hint=(1, None), height=56)
+		self._render_controls()
+		root.add_widget(self.controls_bar)
+
+		# Summary card (white background + subtle gray border)
+		summary_outer = BoxLayout(orientation="vertical", size_hint=(1, None), height=260, padding=[0, 0, 0, 0])
+		with summary_outer.canvas.before:
+			Color(0.82, 0.84, 0.87, 1)  # light gray border
+			self._summary_border = RoundedRectangle(radius=[12])
+		summary_outer.bind(pos=self._update_summary_border, size=self._update_summary_border)
+
+		summary_inner = BoxLayout(orientation="vertical", padding=[12, 12, 12, 12])
+		with summary_inner.canvas.before:
+			Color(1, 1, 1, 1)
+			self._summary_bg = RoundedRectangle(radius=[12])
+		summary_inner.bind(pos=lambda inst, *_: self._update_summary_bg(inst), size=lambda inst, *_: self._update_summary_bg(inst))
+
+		summary_title = Label(text="Short Summary:", bold=True, color=(0.149, 0.196, 0.22, 1), size_hint=(1, None), height=24, halign="left", valign="middle")
+		summary_title.bind(size=lambda inst, _: setattr(inst, 'text_size', inst.size))
+		summary_inner.add_widget(summary_title)
+
+		self.summary_label = Label(text="", halign="left", valign="top", color=(0.149, 0.196, 0.22, 1))
+		self.summary_label.bind(size=lambda inst, _: setattr(inst, 'text_size', inst.size))
+		summary_inner.add_widget(self.summary_label)
+
+		summary_outer.add_widget(summary_inner)
+		root.add_widget(summary_outer)
+
+		root.add_widget(Widget())
+		self.add_widget(root)
+
+	def _render_controls(self):
+		self.controls_bar.clear_widgets()
+		left = Widget()
+		center = BoxLayout(orientation="horizontal", size_hint=(None, None), height=56, width=120, spacing=14)
+		right = Widget()
+		play_icon = "pause_white.png" if self._is_playing else "play_white.png"
+		play_btn = BackCircleButton(diameter=55, icon_name=play_icon)
+		play_btn.bind(on_release=lambda _i: self._toggle_play())
+		stop_btn = BackCircleButton(diameter=55, icon_name="stop_white.png")
+		stop_btn.bind(on_release=lambda _i: self._stop_video())
+		center.add_widget(play_btn)
+		center.add_widget(stop_btn)
+		self.controls_bar.add_widget(left)
+		self.controls_bar.add_widget(center)
+		self.controls_bar.add_widget(right)
+
+	def _update_video_border(self, *_):
+		# No border currently; keep as no-op to avoid callback errors
+		return
+
+	def _update_summary_border(self, instance, *_):
+		self._summary_border.pos = instance.pos
+		self._summary_border.size = instance.size
+
+	def _update_summary_bg(self, instance):
+		self._summary_bg.pos = instance.pos
+		self._summary_bg.size = instance.size
 
 	def apply_context(self, topic: str) -> None:
 		self.topic = topic
 		titles = {
-			"addition": "ADDITION",
-			"subtraction": "SUBTRACTION",
-			"multiplication": "MULTIPLICATION",
-			"division": "DIVISION",
+			"addition": "[color=FF6F00][b]ADDITION[/b][/color]",
+			"subtraction": "[color=FF6F00][b]SUBTRACTION[/b][/color]",
+			"multiplication": "[color=FF6F00][b]MULTIPLICATION[/b][/color]",
+			"division": "[color=FF6F00][b]DIVISION[/b][/color]",
 		}
-		if self.title_label is not None:
-			self.title_label.config(text=titles.get(topic, topic).upper())
-		self._load_video_for_topic()
-		self._load_summary_for_topic()
+		self.title_label.text = titles.get(topic, topic.upper())
+		self._load_video_and_summary()
 
-	def _load_summary_for_topic(self) -> None:
-		bullets = {
-			"addition": (
-				"Adding puts numbers together to make a bigger number.\n"
-				"• Example: 3 + 2 = 5\n"
-				"• The order doesn’t matter: 2 + 3 = 3 + 2\n"
-				"• The answer is called the sum"
-			),
-			"subtraction": (
-				"Subtraction takes away to make a smaller number.\n"
-				"• Example: 7 − 4 = 3\n"
-				"• Think of ‘how many are left?’\n"
-				"• The answer is called the difference"
-			),
-			"multiplication": (
-				"Multiplication is fast repeated addition.\n"
-				"• Example: 3 × 4 = 12 (that’s 3 + 3 + 3 + 3)\n"
-				"• ‘×’ means groups of\n"
-				"• The answer is called the product"
-			),
-			"division": (
-				"Division shares or splits into equal groups.\n"
-				"• Example: 12 ÷ 3 = 4 (3 equal groups of 4)\n"
-				"• ‘÷’ means share equally\n"
-				"• The answer is called the quotient"
-			),
-		}
-		text = bullets.get(self.topic, "")
-		self.summary_text.config(text=text)
-
-	def _bind_window(self) -> None:
-		if self._vlc_player is None:
-			return
-		wid = self.video_canvas.winfo_id()
-		try:
-			if sys.platform.startswith("win"):
-				self._vlc_player.set_hwnd(wid)
-			elif sys.platform == "darwin":
-				self._vlc_player.set_nsobject(wid)
-			else:
-				self._vlc_player.set_xwindow(wid)
-		except Exception:
-			pass
-
-	def _load_video_for_topic(self) -> None:
-		if self._vlc_player is None and self._tkvideo_player is None:
-			# No embedded backend; open externally so user can still watch
-			messagebox.showwarning("Video", "Embedded player not available. Opening with system player.")
-			self._open_external(path)
-			return
+	def _load_video_and_summary(self) -> None:
 		videos = {
 			"addition": "Basic_Addition.mp4",
 			"subtraction": "Basic_Subtraction.mp4",
@@ -151,152 +149,81 @@ class LessonScreen(MobileFrame):
 			"division": "Basic_Division.mp4",
 		}
 		asset = videos.get(self.topic)
-		if not asset:
-			messagebox.showerror("Video", f"No video mapped for topic: {self.topic}")
-			return
-		path: Path = get_assets_dir() / "video" / asset
-		if not path.exists():
-			messagebox.showerror("Video", f"Video file not found:\n{path}")
-			return
-		if self._vlc_player is not None:
-			media = self._vlc_instance.media_new_path(str(path))  # type: ignore[union-attr]
-			self._vlc_player.set_media(media)
-			self._bind_window()
-			self._vlc_player.stop()
-			self.play_pause_btn.config(text="▶ Play")
-		elif self._tkvideo_player is not None:
-			# Configure tkVideoPlayer
-			self._tkvideo_player.load(str(path))
-			self.play_pause_btn.config(text="▶ Play")
+		if asset:
+			self.video_widget.source = str(get_assets_dir() / "video" / asset)
+			self.video_widget.state = "stop"
+			self._is_playing = False
+			# Set poster image for the topic
+			poster_map = {
+				"addition": "addition_thumb.png",
+				"subtraction": "subtraction_thumb.png",
+				"multiplication": "multiplication_thumb.png",
+				"division": "division_thumb.png",
+			}
+			poster_name = poster_map.get(self.topic, "")
+			poster_path = resolve_image_path(poster_name) if poster_name else None
+			self.poster.source = poster_path or ""
+			self.poster.opacity = 1
+			self.video_widget.opacity = 0
+			self._render_controls()
+
+		bullets = {
+			"addition": (
+				"Addition is the math operation where you combine two or more numbers to find out how many there are in total.\nFor example:\n\n"
+				"• If you have 2 apples and you get 3 more apples, you add them: 2 + 3 = 5 apples.\n"
+				"• It’s often shown with the ‘+’ symbol.\n"
+				"• It’s one of the first operations children learn, because it’s the building block for lots of other things (like subtraction, multiplication, etc)."
+			),
+			"subtraction": (
+				"Subtraction takes away to make a smaller number.\n"
+				"• Example: 7 − 4 = 3.\n"
+				"• Think of ‘how many are left?’.\n"
+				"• The answer is called the difference."
+			),
+			"multiplication": (
+				"Multiplication is fast repeated addition.\n"
+				"• Example: 3 × 4 = 12 (3 + 3 + 3 + 3).\n"
+				"• ‘×’ means groups of.\n"
+				"• The answer is called the product."
+			),
+			"division": (
+				"Division shares or splits into equal groups.\n"
+				"• Example: 12 ÷ 3 = 4.\n"
+				"• ‘÷’ means share equally.\n"
+				"• The answer is called the quotient."
+			),
+		}
+		self.summary_label.text = bullets.get(self.topic, "")
 
 	def _toggle_play(self) -> None:
-		if self._vlc_player is None and self._tkvideo_player is None:
+		if self.video_widget is None:
 			return
-		if self._vlc_player is not None:
-			state = self._vlc_player.get_state()
-			if self._vlc is not None and state in (self._vlc.State.Playing, self._vlc.State.Buffering):  # type: ignore[union-attr]
-				self._vlc_player.pause()
-				self.play_pause_btn.config(text="▶ Play")
-			else:
-				self._vlc_player.play()
-				self.play_pause_btn.config(text="⏸ Pause")
-		elif self._tkvideo_player is not None:
-			if self._tkvideo_player.is_paused():
-				self._tkvideo_player.play()
-				self.play_pause_btn.config(text="⏸ Pause")
-			else:
-				self._tkvideo_player.pause()
-				self.play_pause_btn.config(text="▶ Play")
+		if self.video_widget.state == "play":
+			self.video_widget.state = "pause"
+			self._is_playing = False
+		else:
+			self.video_widget.state = "play"
+			self._is_playing = True
+			# Hide poster when playing
+			self.poster.opacity = 0
+			self.video_widget.opacity = 1
+		self._render_controls()
 
-	def _stop(self) -> None:
-		if self._vlc_player is not None:
-			self._vlc_player.stop()
-		if self._tkvideo_player is not None:
-			self._tkvideo_player.stop()
-		self.play_pause_btn.config(text="▶ Play")
+	def _stop_video(self) -> None:
+		if self.video_widget is None:
+			return
+		self.video_widget.state = "stop"
+		self._is_playing = False
+		# Restore poster when stopped
+		self.poster.opacity = 1
+		self.video_widget.opacity = 0
+		self._render_controls()
 
-	def _go_back(self) -> None:
-		self._stop()
+	def on_pre_leave(self, *_):
+		self._stop_video()
+
+	def _back_to_learn(self) -> None:
+		self._stop_video()
 		self.navigator.show("learn")
-
-	def _prepare_vlc(self) -> None:
-		"""Try to import VLC and configure DLL search on Windows automatically."""
-		# If already prepared, skip
-		if self._vlc_player is not None or self._vlc is not None:
-			return
-
-		# On Windows, add VLC install dir to DLL search path if it exists
-		if sys.platform.startswith("win"):
-			# 0) Project-local override via vlc_dir.txt (put install path inside)
-			try:
-				path_file = get_project_root() / "vlc_dir.txt"
-				if path_file.exists():
-					custom = path_file.read_text(encoding="utf-8").strip().strip('"')
-					if custom and os.path.isdir(custom):
-						try:
-							os.add_dll_directory(custom)
-							os.environ.setdefault("PYTHON_VLC_MODULE_PATH", custom)
-						except Exception:
-							pass
-			except Exception:
-				pass
-			# 1) Manual override via environment variable (recommended if custom install)
-			manual = os.environ.get("VLC_DIR") or os.environ.get("LIBVLC_PATH") or os.environ.get("PYTHON_VLC_MODULE_PATH")
-			if manual and os.path.isdir(manual):
-				try:
-					os.add_dll_directory(manual)
-					os.environ.setdefault("PYTHON_VLC_MODULE_PATH", manual)
-				except Exception:
-					pass
-			common_paths = [
-				r"C:\\Program Files\\VideoLAN\\VLC",
-				r"C:\\Program Files (x86)\\VideoLAN\\VLC",
-			]
-			for path in common_paths:
-				if os.path.isdir(path):
-					try:
-						os.add_dll_directory(path)  # Python 3.8+
-						os.environ.setdefault("PYTHON_VLC_MODULE_PATH", path)
-					except Exception:
-						pass
-			# Try Windows Registry for VLC InstallDir
-			try:
-				import winreg  # type: ignore
-				for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
-					for subkey in (
-						"SOFTWARE\\VideoLAN\\VLC",
-						"SOFTWARE\\WOW6432Node\\VideoLAN\\VLC",
-					):
-						try:
-							k = winreg.OpenKey(hive, subkey)
-							install_dir, _ = winreg.QueryValueEx(k, "InstallDir")
-							if os.path.isdir(install_dir):
-								try:
-									os.add_dll_directory(install_dir)
-									os.environ.setdefault("PYTHON_VLC_MODULE_PATH", install_dir)
-								except Exception:
-									pass
-						finally:
-							try:
-								winreg.CloseKey(k)  # type: ignore
-							except Exception:
-								pass
-			except Exception:
-				pass
-
-		# Lazy import python-vlc
-		try:
-			import importlib
-			self._vlc = importlib.import_module("vlc")
-		except Exception:
-			self._vlc = None
-			return
-
-		try:
-			self._vlc_instance = self._vlc.Instance()
-			self._vlc_player = self._vlc_instance.media_player_new()
-			self.after(100, self._bind_window)
-		except Exception:
-			self._vlc_instance = None
-			self._vlc_player = None
-
-	def _prepare_tkvideo_fallback(self) -> None:
-		"""Prepare tkVideoPlayer as a pure-Python fallback if available."""
-		try:
-			from tkVideoPlayer import TkinterVideo  # type: ignore
-			self._tkvideo_player = TkinterVideo(master=self, scaled=True, background="#000000")
-			# Place it exactly where the canvas sits
-			self._tkvideo_player.place(in_=self.video_canvas, x=0, y=0, width=self.video_canvas.winfo_reqwidth(), height=self.video_canvas.winfo_reqheight())
-		except Exception:
-			self._tkvideo_player = None
-
-	def _open_external(self, path: Path) -> None:
-		try:
-			if hasattr(os, "startfile"):
-				os.startfile(str(path))  # type: ignore[attr-defined]
-			else:
-				webbrowser.open(path.as_uri())
-		except Exception:
-			pass
 
 
