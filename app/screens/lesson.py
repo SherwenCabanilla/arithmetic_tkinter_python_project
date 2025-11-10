@@ -12,12 +12,157 @@ from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.uix.video import Video
-from kivy.uix.button import Button
-from kivy.graphics import Color, RoundedRectangle, Line
+from kivy.graphics import Color, RoundedRectangle, Ellipse
 from kivy.core.window import Window
+from kivy.clock import Clock
 from ..config.paths import get_assets_dir
 from ..ui.widgets.buttons import BackCircleButton
 from ..utils.assets import resolve_image_path
+
+
+class VideoSeekBar(Widget):
+	"""Seekable progress bar with draggable thumb - like YouTube!"""
+	def __init__(self, video_widget, **kwargs):
+		super().__init__(**kwargs)
+		self.video_widget = video_widget
+		self.progress = 0.0  # 0.0 to 1.0
+		self.is_dragging = False
+		
+		# Colors - kid-friendly!
+		self.bg_color = (0.85, 0.85, 0.85, 1)  # Light gray
+		self.progress_color = (0.96, 0.26, 0.21, 1)  # Red like YouTube #F54336
+		self.thumb_color = (0.96, 0.26, 0.21, 1)  # Red thumb
+		
+		with self.canvas.before:
+			# Background bar
+			Color(*self.bg_color)
+			self.bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[3])
+			
+			# Progress bar (filled part)
+			Color(*self.progress_color)
+			self.progress_rect = RoundedRectangle(pos=self.pos, size=(0, self.height), radius=[3])
+			
+			# Draggable thumb (circle)
+			Color(*self.thumb_color)
+			self.thumb = Ellipse(pos=(0, 0), size=(16, 16))
+		
+		self.bind(pos=self._update_graphics, size=self._update_graphics)
+	
+	def _update_graphics(self, *args):
+		"""Update bar and thumb graphics"""
+		# Background bar
+		self.bg_rect.pos = self.pos
+		self.bg_rect.size = self.size
+		
+		# Progress bar
+		progress_width = self.width * self.progress
+		self.progress_rect.pos = self.pos
+		self.progress_rect.size = (progress_width, self.height)
+		
+		# Thumb position (centered on progress)
+		thumb_x = self.x + progress_width - 8  # Center the 16px thumb
+		thumb_y = self.y + (self.height / 2) - 8
+		self.thumb.pos = (thumb_x, thumb_y)
+	
+	def update_progress(self, progress):
+		"""Update progress (0.0 to 1.0)"""
+		if not self.is_dragging:  # Don't update if user is dragging
+			self.progress = max(0.0, min(1.0, progress))
+			self._update_graphics()
+	
+	def _seek_to_position(self, x):
+		"""Seek video to position based on x coordinate"""
+		print(f"\n=== SEEK DEBUG START ===")
+		print(f"Touch X: {x}, Bar X: {self.x}, Bar Width: {self.width}")
+		
+		if not self.video_widget:
+			print("ERROR: No video widget!")
+			return
+		
+		if self.video_widget.duration <= 0:
+			print(f"ERROR: Duration not ready: {self.video_widget.duration}")
+			return
+		
+		print(f"Video state: {self.video_widget.state}")
+		print(f"Current position: {self.video_widget.position:.2f}")
+		print(f"Duration: {self.video_widget.duration:.2f}")
+		
+		# Calculate percentage
+		relative_x = x - self.x
+		percentage = max(0.0, min(1.0, relative_x / self.width))
+		print(f"Calculated percentage: {percentage*100:.1f}%")
+		
+		# Strict limit: don't allow seeking past 99.5% to prevent crash
+		percentage = min(percentage, 0.995)
+		print(f"After 99.5% cap: {percentage*100:.1f}%")
+		
+		# Update progress immediately for visual feedback
+		self.progress = percentage
+		self._update_graphics()
+		
+		# Seek video with multiple safety checks
+		try:
+			duration = self.video_widget.duration
+			seek_position = percentage * duration
+			print(f"Target seek position: {seek_position:.2f}s")
+			
+			# Safety: cap at 99.5% of duration
+			max_safe_position = duration * 0.995
+			seek_position = min(seek_position, max_safe_position)
+			print(f"After 99.5% duration cap: {seek_position:.2f}s")
+			
+			# Additional safety: don't seek within 0.2 seconds of end
+			seek_position = min(seek_position, duration - 0.2)
+			print(f"After 0.2s buffer: {seek_position:.2f}s")
+			
+			print(f"CALLING seek method with PERCENTAGE (Kivy Video uses 0-1 range)")
+			
+			# Kivy Video.seek() expects a value between 0 and 1 (percentage of duration)
+			# NOT seconds!
+			seek_percent = seek_position / duration
+			print(f"Seek percent: {seek_percent:.4f} ({seek_percent*100:.1f}%)")
+			
+			self.video_widget.seek(seek_percent)
+			
+			print(f"Called seek({seek_percent:.4f})")
+			
+			# Force position update
+			from kivy.clock import Clock
+			def check_position(dt):
+				print(f"Position after seek: {self.video_widget.position:.2f}s")
+			Clock.schedule_once(check_position, 0.2)
+			
+			print(f"=== SEEK DEBUG END ===\n")
+			
+		except Exception as e:
+			print(f"ERROR during seek: {e}")
+			print(f"=== SEEK DEBUG END ===\n")
+	
+	def on_touch_down(self, touch):
+		"""Start dragging or seeking"""
+		if self.collide_point(*touch.pos):
+			# Allow seeking if video is loaded (any state except initial empty)
+			if self.video_widget and self.video_widget.duration > 0:
+				self.is_dragging = True
+				self._seek_to_position(touch.x)
+				touch.grab(self)
+				return True
+		return super().on_touch_down(touch)
+	
+	def on_touch_move(self, touch):
+		"""Continue dragging"""
+		if touch.grab_current is self:
+			self._seek_to_position(touch.x)
+			return True
+		return super().on_touch_move(touch)
+	
+	def on_touch_up(self, touch):
+		"""Stop dragging"""
+		if touch.grab_current is self:
+			self.is_dragging = False
+			touch.ungrab(self)
+			return True
+		return super().on_touch_up(touch)
 
 
 class LessonScreen(Screen):
@@ -30,6 +175,9 @@ class LessonScreen(Screen):
 		self.summary_label = None
 		self._is_playing = False
 		self.controls_bar = None
+		self.seek_bar = None
+		self.time_label = None
+		self.update_event = None
 		self._build()
 
 	def _build(self) -> None:
@@ -65,14 +213,40 @@ class LessonScreen(Screen):
 		inner.add_widget(self.poster)
 
 		# Video widget (fit inside container)
-		self.video_widget = Video(source="", state="stop", options={"eos": "pause"})
+		self.video_widget = Video(
+			source="", 
+			state="stop", 
+			options={"eos": "stop"},  # Stop at end, don't loop
+			allow_stretch=True
+		)
 		self.video_widget.fit_mode = "contain"
 		self.video_widget.size_hint = (1, 1)
 		self.video_widget.pos_hint = {"x": 0, "y": 0}
 		self.video_widget.opacity = 0
+		self.video_widget.allow_stretch = False
+		self.video_widget.keep_ratio = True
+		self.video_widget.bind(state=self._on_video_state_change)
+		self.video_widget.bind(eos=self._on_video_end)
 		inner.add_widget(self.video_widget)
 
 		root.add_widget(video_frame)
+
+		# Seekable progress bar with draggable thumb
+		self.seek_bar = VideoSeekBar(self.video_widget, size_hint=(1, None), height=6)
+		root.add_widget(self.seek_bar)
+		
+		# Small spacing
+		root.add_widget(Widget(size_hint=(1, None), height=5))
+
+		# Time label (current / total)
+		self.time_label = Label(
+			text="0:00 / 0:00",
+			size_hint=(1, None),
+			height=25,
+			font_size=15,
+			color=(0.4, 0.4, 0.4, 1)
+		)
+		root.add_widget(self.time_label)
 
 		# Controls below the video, centered
 		self.controls_bar = BoxLayout(orientation="horizontal", size_hint=(1, None), height=56)
@@ -169,6 +343,10 @@ class LessonScreen(Screen):
 			self.poster.source = poster_path or ""
 			self.poster.opacity = 1
 			self.video_widget.opacity = 0
+			# Reset seek bar
+			self.seek_bar.update_progress(0)
+			# Update time label with video duration (after a brief delay for video to load)
+			Clock.schedule_once(self._update_initial_time, 0.5)
 			self._render_controls()
 
 		bullets = {
@@ -199,18 +377,143 @@ class LessonScreen(Screen):
 		}
 		self.summary_label.text = bullets.get(self.topic, "")
 
+	def _format_time(self, seconds):
+		"""Format seconds to MM:SS"""
+		if seconds < 0:
+			return "0:00"
+		mins = int(seconds // 60)
+		secs = int(seconds % 60)
+		return f"{mins}:{secs:02d}"
+	
+	def _update_initial_time(self, dt):
+		"""Update time label with video duration after loading"""
+		if self.video_widget and self.video_widget.duration > 0:
+			total_time = self._format_time(self.video_widget.duration)
+			self.time_label.text = f"0:00 / {total_time}"
+	
+	def _update_progress(self, dt):
+		"""Update progress bar and time label while playing"""
+		if not self.video_widget or not self._is_playing:
+			return
+		
+		try:
+			position = self.video_widget.position
+			duration = self.video_widget.duration
+			
+			if duration > 0 and position >= 0:
+				progress = position / duration
+				
+				# IMPORTANT: Only check for end if video is actually loaded and playing
+				# duration > 10 means video is real (not the initial 1.0 placeholder)
+				if duration > 10:
+					# Safety check: stop very close to the end (at 99.5%)
+					# Only 0.2 seconds before the actual end
+					if (progress >= 0.995 or 
+					    position >= (duration - 0.2) or 
+					    (duration - position) < 0.2):
+						print(f"Near end detected: position={position:.2f}, duration={duration:.2f}, progress={progress*100:.1f}%")
+						self._on_video_end(self.video_widget)
+						return
+				
+				# Update seek bar (cap at 99.5% for safety)
+				safe_progress = min(progress, 0.995)
+				self.seek_bar.update_progress(safe_progress)
+				
+				# Update time label
+				current_time = self._format_time(position)
+				total_time = self._format_time(duration)
+				self.time_label.text = f"{current_time} / {total_time}"
+		except Exception as e:
+			print(f"Error in update_progress: {e}")
+			# If there's any error, stop safely
+			if self._is_playing:
+				self._stop_video()
+	
+	def _on_video_end(self, instance):
+		"""Called when video reaches the end - prevent looping and crashes"""
+		print("Video ended - resetting for replay")
+		
+		# Stop update timer FIRST
+		if self.update_event:
+			self.update_event.cancel()
+			self.update_event = None
+		
+		self._is_playing = False
+		
+		# Stop and reset video completely
+		if self.video_widget:
+			try:
+				# First, unbind to prevent recursive calls
+				self.video_widget.unbind(eos=self._on_video_end)
+				self.video_widget.unbind(state=self._on_video_state_change)
+				
+				# Stop the video
+				self.video_widget.state = "stop"
+				
+				# Wait a tiny bit, then seek to start
+				def reset_video(dt):
+					if self.video_widget:
+						self.video_widget.seek(0)
+						self.video_widget.position = 0
+						# Rebind events
+						self.video_widget.bind(eos=self._on_video_end)
+						self.video_widget.bind(state=self._on_video_state_change)
+						print("Video reset complete - ready to play again")
+				
+				Clock.schedule_once(reset_video, 0.1)
+				
+			except Exception as e:
+				print(f"Error resetting video: {e}")
+		
+		# Restore poster
+		self.poster.opacity = 1
+		if self.video_widget:
+			self.video_widget.opacity = 0
+		
+		# Reset seek bar to start
+		self.seek_bar.update_progress(0)
+		
+		# Update time to show it's ready
+		if self.video_widget and self.video_widget.duration > 0:
+			total = self._format_time(self.video_widget.duration)
+			self.time_label.text = f"0:00 / {total}"
+		
+		self._render_controls()
+	
+	def _on_video_state_change(self, instance, value):
+		"""Handle video state changes (especially when video ends)"""
+		if value == "stop":
+			self._is_playing = False
+			# Restore poster when video ends
+			self.poster.opacity = 1
+			self.video_widget.opacity = 0
+			self.seek_bar.update_progress(0)
+			self.time_label.text = "0:00 / 0:00"
+			# Stop update timer
+			if self.update_event:
+				self.update_event.cancel()
+				self.update_event = None
+			self._render_controls()
+
 	def _toggle_play(self) -> None:
 		if self.video_widget is None:
 			return
 		if self.video_widget.state == "play":
 			self.video_widget.state = "pause"
 			self._is_playing = False
+			# Stop progress updates when paused
+			if self.update_event:
+				self.update_event.cancel()
+				self.update_event = None
 		else:
 			self.video_widget.state = "play"
 			self._is_playing = True
 			# Hide poster when playing
 			self.poster.opacity = 0
 			self.video_widget.opacity = 1
+			# Start progress updates (30 FPS)
+			if not self.update_event:
+				self.update_event = Clock.schedule_interval(self._update_progress, 1/30)
 		self._render_controls()
 
 	def _stop_video(self) -> None:
@@ -221,6 +524,12 @@ class LessonScreen(Screen):
 		# Restore poster when stopped
 		self.poster.opacity = 1
 		self.video_widget.opacity = 0
+		self.seek_bar.update_progress(0)
+		self.time_label.text = "0:00 / 0:00"
+		# Stop update timer
+		if self.update_event:
+			self.update_event.cancel()
+			self.update_event = None
 		self._render_controls()
 
 	def on_pre_leave(self, *_):
